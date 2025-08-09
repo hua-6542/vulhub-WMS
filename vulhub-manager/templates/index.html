@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vulhub靶场管理系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .card {
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            border: none;
+            margin-bottom: 1rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.15);
+        }
+        .status-running {
+            color: #28a745;
+        }
+        .status-stopped {
+            color: #dc3545;
+        }
+        .btn-action {
+            margin: 0 2px;
+            min-width: 90px;
+            padding: 6px 12px;
+            font-size: 14px;
+        }
+        .container-section {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eaeaea;
+        }
+        .stat-card {
+            margin-bottom: 20px;
+        }
+        .stat-card .card-body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+        }
+        .stat-card .number {
+            font-size: 24px;
+            font-weight: 700;
+        }
+        .stat-card .icon {
+            font-size: 30px;
+            margin-bottom: 15px;
+        }
+        .card-header {
+            font-weight: 600;
+            font-size: 16px;
+            padding: 12px 20px;
+        }
+        .stats-row {
+            margin-bottom: 25px;
+        }
+        #targets-container {
+            margin-top: 20px;
+        }
+        .port-badge {
+            margin-right: 4px;
+            margin-bottom: 4px;
+        }
+        .search-bar {
+            margin-bottom: 20px;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px 0;
+            margin-top: 40px;
+            color: #6c757d;
+            font-size: 14px;
+        }
+        .badge-custom {
+            padding: 6px 10px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12 text-center">
+                    <h1><i class="fas fa-shield-alt"></i> Vulhub靶场管理系统</h1>
+                    <p class="lead">轻松管理您的安全测试环境</p>
+                    <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjZmZmIj48cGF0aCBkPSJNMTIgMkM2LjUgMiAyIDYuNSAyIDEyczQuNSAxMCAxMCAxMCAxMC00LjUgMTAtMTBTMTcuNSAyIDEyIDJtMCAxOGMtNC40IDAtOC0zLjYtOC04czMuNi04IDgtOCA4IDMuNiA4IDgtMy42IDgtOCA4bTItMTMuNWgtNHY3SDEwdjNINnYtM2gydi0xYzAtMS4xLjktMiAyLTJoMnY0bDMgMyAzLTN2LTRjMC0xLjEtLjktMi0yLTJtLTItMmEyIDIgMCAwIDAtMiAydjFjMCAxLjEuOSAyIDIgMmgydjJoLTJ2M2gydi03aC0yeiIvPjwvc3ZnPg==" alt="Vulhub Logo" style="width:60px; height:60px; margin-top:15px;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- 统计信息卡片 -->
+        <div class="row stats-row">
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="card-body text-primary">
+                        <div class="icon">
+                            <i class="fas fa-folder"></i>
+                        </div>
+                        <div class="number" id="total-targets">0</div>
+                        <div class="text">靶场总数</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="card-body text-success">
+                        <div class="icon">
+                            <i class="fas fa-play-circle"></i>
+                        </div>
+                        <div class="number" id="running-targets">0</div>
+                        <div class="text">运行中靶场</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="card-body text-warning">
+                        <div class="icon">
+                            <i class="fas fa-server"></i>
+                        </div>
+                        <div class="number" id="total-containers">0</div>
+                        <div class="text">容器总数</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="card-body text-info">
+                        <div class="icon">
+                            <i class="fas fa-plug"></i>
+                        </div>
+                        <div class="number">8080</div>
+                        <div class="text">开放端口</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 创建靶场表单 -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-plus-circle"></i> 创建新靶场</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-6 mb-2">
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-keyboard"></i></span>
+                                    <input type="text" class="form-control" id="targetName" placeholder="输入靶场名称 (例如: DVWA或SQLi-lab)">
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-server"></i></span>
+                                    <select class="form-select" id="imageSelect">
+                                        <option value="nginx">nginx</option>
+                                        <option value="apache">apache</option>
+                                        <option value="mysql">mysql</option>
+                                        <option value="nodejs">nodejs</option>
+                                        <option value="dvwa">DVWA</option>
+                                        <option value="juiceshop">Juice Shop</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <button class="btn btn-primary w-100" onclick="createTarget()">
+                                    <i class="fas fa-plus me-1"></i> 创建
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 搜索和过滤器 -->
+        <div class="row search-bar">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" id="searchInput" class="form-control" placeholder="搜索靶场名称...">
+                    <button class="btn btn-outline-secondary" type="button" onclick="filterTargets()">搜索</button>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="btn-group float-end" role="group">
+                    <input type="radio" class="btn-check" name="filterStatus" id="allFilter" autocomplete="off" checked>
+                    <label class="btn btn-outline-primary" for="allFilter"><i class="fas fa-list"></i> 全部</label>
+                    
+                    <input type="radio" class="btn-check" name="filterStatus" id="runningFilter" autocomplete="off">
+                    <label class="btn btn-outline-success" for="runningFilter"><i class="fas fa-play"></i> 运行中</label>
+                    
+                    <input type="radio" class="btn-check" name="filterStatus" id="stoppedFilter" autocomplete="off">
+                    <label class="btn btn-outline-danger" for="stoppedFilter"><i class="fas fa-stop"></i> 已停止</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- 靶场列表 -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="mb-0"><i class="fas fa-list me-2"></i>靶场列表</h3>
+                    <div class="d-flex">
+                        <div class="form-check form-switch me-3">
+                            <input class="form-check-input" type="checkbox" id="autoRefresh" checked>
+                            <label class="form-check-label" for="autoRefresh">自动刷新</label>
+                        </div>
+                        <button class="btn btn-outline-secondary" onclick="refreshPage()">
+                            <i class="fas fa-sync-alt"></i> 刷新
+                        </button>
+                    </div>
+                </div>
+                <div class="alert alert-info d-flex align-items-center">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <span>共 <strong id="targetCount">0</strong> 个靶场: <span class="text-success" id="runningCount">0</span> 个运行中, <span class="text-danger" id="stoppedCount">0</span> 个已停止</span>
+                </div>
+                <div id="targets-container" class="row">
+                    <!-- 靶场卡片将由JavaScript动态插入 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 容器列表 -->
+        <div class="row container-section">
+            <div class="col-md-12">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3><i class="fas fa-box me-2"></i>容器状态</h3>
+                    <button class="btn btn-sm btn-outline-primary" onclick="toggleContainerDetails()">
+                        <i class="fas fa-expand-alt"></i> <span id="toggle-text">显示详情</span>
+                    </button>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th class="text-center"><i class="fas fa-fingerprint"></i> ID</th>
+                                        <th><i class="fas fa-tag"></i> 名称</th>
+                                        <th><i class="fas fa-project-diagram"></i> 镜像</th>
+                                        <th class="text-center"><i class="fas fa-power-off"></i> 状态</th>
+                                        <th><i class="fas fa-ethernet"></i> 端口</th>
+                                        <th class="text-center"><i class="fas fa-arrows-alt-v"></i> 操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="containers-table-body">
+                                    <!-- 容器表格数据将由JavaScript动态插入 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div class="container">
+            <p class="mb-0">© 2023 Vulhub靶场管理系统 | 安全测试环境管理平台</p>
+            <p class="mb-0">版本: v1.5.0 | <span id="current-date"></span></p>
+        </div>
+    </div>
+
+    <!-- Toast提示 -->
+    <div class="toast-container position-fixed top-20 end-0 p-3">
+        <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="2000">
+            <div class="toast-header">
+                <strong class="me-auto"><i class="fas fa-bell me-2"></i>系统通知</strong>
+                <small id="toast-time">刚刚</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="toast-message"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 示例数据
+        const targets = [
+            {id: 't1', name: 'DVWA', path: '/vuln/web/dvwa', status: 'running', image: 'dvwa', created: '2023-08-10', ports: [8080, 3000]},
+            {id: 't2', name: 'SQLi-lab', path: '/vuln/web/sqli-lab', status: 'stopped', image: 'apache', created: '2023-08-12', ports: [8000]},
+            {id: 't3', name: 'Juice Shop', path: '/vuln/web/juice-shop', status: 'running', image: 'juiceshop', created: '2023-08-14', ports: [3000, 9000]},
+            {id: 't4', name: 'Docker-Goat', path: '/vuln/web/docker-goat', status: 'stopped', image: 'nodejs', created: '2023-08-15', ports: [5000]},
+            {id: 't5', name: 'Web-CTF', path: '/ctf/web/basic-cmdi', status: 'running', image: 'ctfd', created: '2023-08-16', ports: [8088]}
+        ];
+
+        // 容器状态数据
+        const containers = [
+            {id: 'c1-a7bd', name: 'dvwa-web', image: 'vulhub/dvwa:latest', status: 'running', ports: {'8080/tcp': [{'HostIp':'0.0.0.0','HostPort':'8080'}]}, created: '2 days ago', cpu: '12%', ram: '320MB'},
+            {id: 'c2-f34e', name: 'db-mysql-5', image: 'mysql:5.7', status: 'running', ports: {'3306/tcp': []}, created: '2 days ago', cpu: '4%', ram: '180MB'},
+            {id: 'c3-9cd2', name: 'juice-shop', image: 'bkimminich/juice-shop', status: 'running', ports: {'3000/tcp': [{'HostIp':'0.0.0.0','HostPort':'9090'}]}, created: '1 day ago', cpu: '15%', ram: '480MB'},
+            {id: 'c4-5e8f', name: 'web-basic', image: 'nginx:alpine', status: 'stopped', ports: {'80/tcp': []}, created: '1 hour ago', cpu: '0%', ram: '0MB'},
+            {id: 'c5-8b16', name: 'redis-test', image: 'redis', status: 'running', ports: {'6379/tcp': []}, created: '5 hours ago', cpu: '2%', ram: '32MB'},
+            {id: 'c6-2d4a', name: 'ctf-web', image: 'ctfd/ctfd', status: 'running', ports: {'8000/tcp': [{'HostIp':'0.0.0.0','HostPort':'8888'}]}, created: '16 hours ago', cpu: '8%', ram: '210MB'}
+        ];
+        
+        // 当前过滤状态
+        let filterStatus = 'all';
+        let searchQuery = '';
+        
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            renderTargetList();
+            renderContainerTable();
+            updateStats();
+            setCurrentDate();
+            
+            // 设置过滤按钮事件
+            document.getElementById('allFilter').addEventListener('change', filterTargets);
+            document.getElementById('runningFilter').addEventListener('change', filterTargets);
+            document.getElementById('stoppedFilter').addEventListener('change', filterTargets);
+            
+            // 设置搜索事件
+            document.getElementById('searchInput').addEventListener('input', filterTargets);
+            
+            // 设置自动刷新
+            setInterval(refreshPage, 10000);
+        });
+        
+        // 渲染靶场列表
+        function renderTargetList() {
+            const container = document.getElementById('targets-container');
+            container.innerHTML = '';
+            
+            const filteredTargets = targets.filter(target => {
+                const statusMatch = filterStatus === 'all' || 
+                                  (filterStatus === 'running' && target.status === 'running') || 
+                                  (filterStatus === 'stopped' && target.status === 'stopped');
+                const searchMatch = target.name.toLowerCase().includes(searchQuery.toLowerCase());
+                return statusMatch && searchMatch;
+            });
+            
+            // 更新靶场计数
+            document.getElementById('targetCount').textContent = filteredTargets.length;
+            document.getElementById('runningCount').textContent = filteredTargets.filter(t => t.status === 'running').length;
+            document.getElementById('stoppedCount').textContent = filteredTargets.filter(t => t.status === 'stopped').length;
+            
+            if (filteredTargets.length === 0) {
+                container.innerHTML = `
+                    <div class="col-md-12">
+                        <div class="alert alert-warning text-center">
+                            <i class="fas fa-exclamation-triangle me-2"></i>没有找到匹配的靶场
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            filteredTargets.forEach(target => {
+                const card = document.createElement('div');
+                card.className = 'col-md-6 mb-3';
+                card.innerHTML = `
+                    <div class="card h-100">
+                        <div class="card-body position-relative">
+                            <button class="btn btn-sm btn-outline-secondary position-absolute top-0 end-0 mt-2 me-2" 
+                                    data-bs-toggle="tooltip" title="编辑" onclick="editTarget('${target.id}')">
+                                <i class="fas fa-cog"></i>
+                            </button>
+                            <div class="d-flex align-items-start">
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <h5 class="mb-0 me-2">${target.name}</h5>
+                                        ${target.status === 'running' ? 
+                                            '<span class="badge bg-success bg-custom">运行中</span>' : 
+                                            '<span class="badge bg-secondary bg-custom">已停止</span>'}
+                                    </div>
+                                    <div class="d-flex flex-wrap mb-1">
+                                        ${target.ports.map(port => 
+                                            `<span class="badge bg-primary port-badge">
+                                                <i class="fas fa-ethernet me-1"></i>${port}
+                                            </span>`
+                                        ).join('')}
+                                    </div>
+                                    <div class="d-flex align-items-center text-muted mb-2">
+                                        <i class="fas fa-server me-1"></i>
+                                        <small>镜像: ${target.image}</small>
+                                        <span class="mx-2">•</span>
+                                        <i class="fas fa-calendar me-1"></i>
+                                        <small>创建: ${target.created}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-flex mt-3">
+                                ${target.status === 'running' ? 
+                                    `<button class="btn btn-danger btn-action me-1"
+                                            onclick="stopTarget('${target.id}')">
+                                        <i class="fas fa-stop me-1"></i>停止
+                                    </button>
+                                    <button class="btn btn-outline-primary btn-action me-1"
+                                            onclick="openTarget('${target.id}')">
+                                        <i class="fas fa-external-link-alt me-1"></i>访问
+                                    </button>` : 
+                                    `<button class="btn btn-success btn-action me-1"
+                                            onclick="startTarget('${target.id}')">
+                                        <i class="fas fa-play me-1"></i>启动
+                                    </button>`}
+                                <button class="btn btn-outline-info btn-action me-1"
+                                        onclick="showLogs('${target.id}')">
+                                    <i class="fas fa-terminal me-1"></i>日志
+                                </button>
+                                <button class="btn btn-outline-danger btn-action"
+                                        onclick="deleteTarget('${target.id}')">
+                                    <i class="fas fa-trash me-1"></i>删除
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            
+            // 初始化工具提示
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        }
+        
+        // 渲染容器表格
+        function renderContainerTable(showDetails = false) {
+            const tbody = document.getElementById('containers-table-body');
+            tbody.innerHTML = '';
+            
+            containers.forEach(container => {
+                const row = document.createElement('tr');
+                
+                // 状态颜色
+                let statusColor = '';
+                if (container.status === 'running') {
+                    statusColor = 'text-success';
+                } else if (container.status === 'stopped') {
+                    statusColor = 'text-danger';
+                } else {
+                    statusColor = 'text-warning';
+                }
+                
+                // 端口列表
+                let portsHtml = '';
+                Object.entries(container.ports).forEach(([port, mappings]) => {
+                    if (mappings && mappings.length > 0) {
+                        mappings.forEach(mapping => {
+                            portsHtml += `<div>${mapping.HostIp && mapping.HostIp !== '::' ? mapping.HostIp : '*'}:${mapping.HostPort} → ${port}</div>`;
+                        });
+                    } else {
+                        portsHtml += `<div>${port} (未公开)</div>`;
+                    }
+                });
+                
+                row.innerHTML = `
+                    <td class="text-center"><small class="text-muted">${container.id.substring(0, 6)}</small></td>
+                    <td>${container.name}</td>
+                    <td><span class="badge bg-secondary">${container.image}</span></td>
+                    <td class="text-center ${statusColor}">
+                        ${container.status === 'running' ? 
+                            '<i class="fas fa-check-circle me-1"></i>运行中' : 
+                            '<i class="fas fa-times-circle me-1"></i>已停止'}
+                        ${showDetails ? `<br><small>${container.created}</small>` : ''}
+                    </td>
+                    <td>${showDetails ? portsHtml : '<span class="text-muted">多个端口...</span>'}</td>
+                    <td class="text-center">
+                        <button class="btn btn-sm ${container.status === 'running' ? 'btn-outline-danger' : 'btn-outline-success'}" 
+                                onclick="toggleContainerStatus('${container.id}')"
+                                data-bs-toggle="tooltip" title="${container.status === 'running' ? '停止容器' : '启动容器'}">
+                            ${container.status === 'running' ? '<i class="fas fa-stop"></i>' : '<i class="fas fa-play"></i>'}
+                        </button>
+                        <button class="btn btn-sm btn-outline-info" onclick="showLogs('${container.id}')"
+                                data-bs-toggle="tooltip" title="查看日志">
+                            <i class="fas fa-terminal"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+            
+            // 初始化工具提示
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        }
+        
+        // 更新统计信息
+        function updateStats() {
+            const runningTargets = targets.filter(t => t.status === 'running').length;
+            document.getElementById('total-targets').textContent = targets.length;
+            document.getElementById('running-targets').textContent = runningTargets;
+            document.getElementById('total-containers').textContent = containers.length;
+        }
+        
+        // 设置当前日期
+        function setCurrentDate() {
+            const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+            const currentDate = new Date().toLocaleDateString('zh-CN', options);
+            document.getElementById('current-date').textContent = currentDate;
+        }
+        
+        // 创建新靶场
+        function createTarget() {
+            const targetName = document.getElementById('targetName').value.trim();
+            const imageSelect = document.getElementById('imageSelect').value;
+            
+            if (!targetName) {
+                showToast('请输入靶场名称', 'error');
+                return;
+            }
+            
+            // 检查名称是否已存在
+            if (targets.some(t => t.name.toLowerCase() === targetName.toLowerCase())) {
+                showToast(`靶场 "${targetName}" 已存在`, 'error');
+                return;
+            }
+            
+            // 添加到靶场列表
+            const newTarget = {
+                id: 't-' + Math.random().toString(36).substring(2, 9),
+                name: targetName,
+                path: `/vulhub/${imageSelect}/${targetName.toLowerCase()}`,
+                status: 'stopped',
+                image: imageSelect,
+                created: '刚刚',
+                ports: []
+            };
+            
+            targets.unshift(newTarget);
+            renderTargetList();
+            updateStats();
+            
+            showToast(`成功创建靶场: ${targetName}`, 'success');
+            
+            // 清空输入框
+            document.getElementById('targetName').value = '';
+        }
+        
+        // 编辑靶场
+        function editTarget(targetId) {
+            const target = targets.find(t => t.id === targetId);
+            if (target) {
+                showToast(`已打开编辑模式: ${target.name}`, 'info');
+                // 在实际应用中，这里会打开编辑对话框
+            }
+        }
+        
+        // 启动靶场
+        function startTarget(targetId) {
+            const target = targets.find(t => t.id === targetId);
+            if (target) {
+                target.status = 'running';
+                showToast(`已启动靶场: ${target.name}`, 'success');
+                renderTargetList();
+                updateStats();
+                
+                // 模拟添加相关容器
+                const newContainer = {
+                    id: 'c-' + Math.random().toString(36).substring(2, 9),
+                    name: target.name.toLowerCase() + '-' + new Date().getTime().toString().substring(5),
+                    image: target.image,
+                    status: 'running',
+                    ports: {'80/tcp': [{'HostIp':'0.0.0.0','HostPort': Math.floor(8000 + Math.random() * 1000).toString()}]},
+                    created: '刚刚',
+                    cpu: '0%',
+                    ram: '0MB'
+                };
+                containers.push(newContainer);
+                renderContainerTable();
+                updateStats();
+            }
+        }
+        
+        // 停止靶场
+        function stopTarget(targetId) {
+            const target = targets.find(t => t.id === targetId);
+            if (target) {
+                target.status = 'stopped';
+                showToast(`已停止靶场: ${target.name}`, 'warning');
+                renderTargetList();
+                updateStats();
+                
+                // 模拟停止相关容器
+                containers.forEach(c => {
+                    if (c.name.includes(target.name.toLowerCase())) {
+                        c.status = 'stopped';
+                    }
+                });
+                renderContainerTable();
+            }
+        }
+        
+        // 打开靶场
+        function openTarget(targetId) {
+            const target = targets.find(t => t.id === targetId);
+            if (target) {
+                const port = target.ports[0] || 8080;
+                showToast(`正在打开: ${target.name} (http://localhost:${port})`, 'info');
+                // 在实际应用中，这里会打开一个新窗口
+            }
+        }
+        
+        // 显示日志
+        function showLogs(targetId) {
+            showToast(`正在显示 ${targetId.substring(0, 6)} 的日志...`, 'info');
+        }
+        
+        // 删除靶场
+        function deleteTarget(targetId) {
+            const target = targets.find(t => t.id === targetId);
+            if (target) {
+                if (!confirm(`确定要永久删除 "${target.name}" 靶场吗？此操作无法撤销。`)) {
+                    return;
+                }
+                
+                const index = targets.findIndex(t => t.id === targetId);
+                targets.splice(index, 1);
+                
+                renderTargetList();
+                updateStats();
+                showToast(`已删除靶场: ${target.name}`, 'warning');
+            }
+        }
+        
+        // 切换容器状态
+        function toggleContainerStatus(containerId) {
+            const container = containers.find(c => c.id === containerId);
+            if (container) {
+                container.status = container.status === 'running' ? 'stopped' : 'running';
+                renderContainerTable();
+                
+                const action = container.status === 'running' ? '启动' : '停止';
+                showToast(`容器 ${container.name} 已${action}`, 'info');
+            }
+        }
+        
+        // 刷新页面
+        function refreshPage() {
+            if (document.getElementById('autoRefresh').checked) {
+                showToast('数据已刷新', 'info');
+                renderContainerTable();
+            }
+        }
+        
+        // 切换容器详情显示
+        function toggleContainerDetails() {
+            const showDetails = document.getElementById('toggle-text').textContent === '显示详情';
+            document.getElementById('toggle-text').textContent = showDetails ? '收起详情' : '显示详情';
+            renderContainerTable(showDetails);
+        }
+        
+        // 过滤靶场
+        function filterTargets() {
+            // 获取过滤器状态
+            if (document.getElementById('allFilter').checked) {
+                filterStatus = 'all';
+            } else if (document.getElementById('runningFilter').checked) {
+                filterStatus = 'running';
+            } else if (document.getElementById('stoppedFilter').checked) {
+                filterStatus = 'stopped';
+            }
+            
+            // 获取搜索查询
+            searchQuery = document.getElementById('searchInput').value;
+            
+            renderTargetList();
+        }
+        
+        // 显示Toast 
+        function showToast(message, type = 'info') {
+            const toastEl = document.getElementById('toast');
+            const toastBody = document.getElementById('toast-message');
+            toastBody.textContent = message;
+            
+            // 时间设置
+            const now = new Date();
+            document.getElementById('toast-time').textContent = now.toLocaleTimeString('zh-CN', {hour: '2-digit', minute:'2-digit'});
+            
+            // 重置之前的样式
+            toastEl.classList.remove('bg-info', 'bg-success', 'bg-warning', 'bg-danger');
+            
+            // 根据类型设置样式
+            if (type === 'success') {
+                toastEl.classList.add('bg-success');
+            } else if (type === 'warning') {
+                toastEl.classList.add('bg-warning');
+            } else if (type === 'error') {
+                toastEl.classList.add('bg-danger');
+            } else {
+                toastEl.classList.add('bg-info');
+            }
+            
+            const toast = new bootstrap.Toast(toastEl);
+            toast.show();
+        }
+    </script>
+</body>
+</html>
