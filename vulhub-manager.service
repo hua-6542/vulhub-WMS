@@ -1,0 +1,14 @@
+[Unit]
+Description=Vulhub Manager Service
+After=network.target docker.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/vulhub-manager
+ExecStart=/usr/bin/python3 /opt/vulhub-manager/app.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
